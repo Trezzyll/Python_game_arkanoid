@@ -9,18 +9,15 @@ def main():
 
     running = True
     while running:
-        # Обработка событий
+        # Main Loop
         for event in pygame.event.get():
-            if event.type == pygame.QUIT:   # нажатие на крестик
+            if event.type == pygame.QUIT:   # Press "close" button
                 running = False
 
-        # Заливка фона (пока чёрный)
         screen.fill(BLACK)
 
-        # Здесь будет отрисовка объектов
-
-        pygame.display.flip()   # обновление экрана
-        clock.tick(FPS)         # ограничение FPS
+        pygame.display.flip()   # Screen Update
+        clock.tick(FPS)         # FPS (Frames Per Second)
 
     pygame.quit()
 
