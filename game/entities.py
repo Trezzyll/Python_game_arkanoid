@@ -23,6 +23,12 @@ class Paddle:
         
         self.rect.x += self.vx
 
+        # Restrict the Paddle's movement
+        if self.rect.left < cfg.FIELD_LEFT:
+            self.rect.left = cfg.FIELD_LEFT
+        if self.rect.right > cfg.FIELD_RIGHT:
+            self.rect.right = cfg.FIELD_RIGHT
+
     def draw(self, screen: pygame.Surface) -> None:
         """ Renders the Paddle on the screen. """
         pygame.draw.rect(screen, cfg.PADDLE_COLOR, self.rect, border_radius=5)

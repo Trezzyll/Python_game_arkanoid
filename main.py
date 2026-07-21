@@ -2,6 +2,7 @@ import pygame
 import settings as cfg
 from screens.game_screen import run as game_screen
 from game.entities import Paddle, Brick, Ball
+from game.level import load_level
 
 def _bounce_off_rect(ball: Ball, rect: pygame.Rect):
     """ Checks if the Ball collides with the given rect. """
@@ -41,12 +42,8 @@ def main():
 
     running = True
     paddle = Paddle()
-    bricks = [
-        Brick(2, 2, 1),
-        Brick(1, 5, 2),
-        Brick(2, 1, 0),
-        Brick(0, 0, -1)
-    ]
+
+    bricks, rows, cols = load_level(1)
     ball = Ball(cfg.WIDTH // 2, cfg.HEIGHT // 2)
 
     while running:
