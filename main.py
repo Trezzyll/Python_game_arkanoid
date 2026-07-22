@@ -218,7 +218,7 @@ def main():
         for powerup in powerups:
             powerup.draw(screen)
 
-        # Draw mute button last
+        # Draw mute button
         pygame.draw.rect(screen, (70, 70, 70), mute_button, border_radius=8)
 
         text = "Mute" if not muted else "Unmute"
