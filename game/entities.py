@@ -103,11 +103,29 @@ class PowerUp:
     def draw(self, screen):
         if self.type == "shrink":
             color = (255, 80, 80)
+            letter = "S"
+
         elif self.type == "speed_up":
             color = (80, 255, 80)
+            letter = "U"
+
         elif self.type == "speed_down":
             color = (80, 80, 255)
+            letter = "D"
+
         else:
             color = (255, 255, 255)
+            letter = "?"
 
         pygame.draw.rect(screen, color, self.rect, border_radius=5)
+
+        font = pygame.font.SysFont(None, 20)
+        text = font.render(letter, True, (255, 255, 255))
+
+        screen.blit(
+            text,
+            (
+                self.rect.centerx - text.get_width() // 2,
+                self.rect.centery - text.get_height() // 2,
+            ),
+        )

@@ -3,6 +3,7 @@ import random
 import settings as cfg
 from game.entities import Paddle, Brick, Ball, PowerUp
 from game.level import load_level
+from screens.game_screen import ApplyBonus
 
 def _bounce_off_rect(ball: Ball, rect: pygame.Rect):
     """ Checks if the Ball collides with the given rect. """
@@ -102,7 +103,6 @@ def main():
 
     shrink_end_time = 0
     NORMAL_PADDLE_WIDTH = cfg.PADDLE_WIDTH
-    SHRUNK_PADDLE_WIDTH = 60
 
     muted = False
 
@@ -177,32 +177,9 @@ def main():
 
             if powerup.rect.colliderect(paddle.rect):
 
-                if powerup.type == "shrink":
-                    center = paddle.rect.centerx
-                    paddle.rect.width = SHRUNK_PADDLE_WIDTH
-                    paddle.rect.centerx = center
-
+                if ApplyBonus(powerup, paddle, ball):
                     shrink_end_time = pygame.time.get_ticks() + 10000
 
-                elif powerup.type == "speed_up":
-                    ball.vx *= 1.3
-                    ball.vy *= 1.3
-
-                    if abs(ball.vx) > 10:
-                        ball.vx = 10 if ball.vx > 0 else -10
-
-                    if abs(ball.vy) > 10:
-                        ball.vy = 10 if ball.vy > 0 else -10
-
-                elif powerup.type == "speed_down":
-                    ball.vx *= 0.7
-                    ball.vy *= 0.7
-
-                    if abs(ball.vx) < 2:
-                        ball.vx = 2 if ball.vx > 0 else -2
-
-                    if abs(ball.vy) < 2:
-                        ball.vy = 2 if ball.vy > 0 else -2
                 bonus_sound.play()
                 powerups.remove(powerup)
 
