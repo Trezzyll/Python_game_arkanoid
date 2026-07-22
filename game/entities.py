@@ -90,3 +90,24 @@ class Ball:
         """ Renders the Ball. """
         colour = cfg.BALL_COLOR
         pygame.draw.circle(screen, colour, self.rect.center, self.radius)
+
+class PowerUp:
+    def __init__(self, x, y, bonus_type):
+                self.type = bonus_type
+                self.rect = pygame.Rect(x, y, 24, 24)
+                self.speed = 3
+
+    def update(self):
+                self.rect.y += self.speed
+
+    def draw(self, screen):
+        if self.type == "shrink":
+            color = (255, 80, 80)
+        elif self.type == "speed_up":
+            color = (80, 255, 80)
+        elif self.type == "speed_down":
+            color = (80, 80, 255)
+        else:
+            color = (255, 255, 255)
+
+        pygame.draw.rect(screen, color, self.rect, border_radius=5)

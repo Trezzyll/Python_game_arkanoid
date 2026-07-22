@@ -1,7 +1,8 @@
 import pygame
+import random
 import settings as cfg
 from screens.game_screen import run as game_screen
-from game.entities import Paddle, Brick, Ball
+from game.entities import Paddle, Brick, Ball, PowerUp
 from game.level import load_level
 
 def _bounce_off_rect(ball: Ball, rect: pygame.Rect):
@@ -34,7 +35,7 @@ def _bounce_off_rect(ball: Ball, rect: pygame.Rect):
 
         ball.rect.right = rect.left
         ball.vx *= -1
-    elif min_overlap == overlap_right and ball.vy < 0:
+    elif min_overlap == overlap_right and ball.vx < 0:
         print('right')
 
         ball.rect.left = rect.right
@@ -43,6 +44,8 @@ def _bounce_off_rect(ball: Ball, rect: pygame.Rect):
 def _handle_ball_vs_bricks(
     ball: Ball,
     bricks: list[Brick],
+    powerups,
+    hit_sound,
 ) -> int:
 
     scored = 0
@@ -55,12 +58,24 @@ def _handle_ball_vs_bricks(
         bonus_type = brick.hit()
 
         if brick.hp <= 0:
+            hit_sound.play()
+            if random.random() < cfg.BONUS_PROBABILITY:
+                bonus_type = random.choice(cfg.BONUS_TYPES)
+
+                powerups.append(
+                    PowerUp(
+                        brick.rect.centerx,
+                        brick.rect.centery,
+                        bonus_type
+                    )
+                )
+
             bricks.remove(brick)
             scored += 10
     return scored
-
-def _handle_ball_vs_paddle(ball: Ball, paddle: Paddle) -> None:
+def _handle_ball_vs_paddle(ball: Ball, paddle: Paddle, hit_sound) -> None:
     """ Handles Ball bounce over the Paddle. """
+    hit_sound.play()
     _bounce_off_rect(ball, paddle.rect)
     offset = (ball.rect.centerx - paddle.rect.centerx) / (paddle.rect.width / 2)
     max_vx = cfg.MAX_BALL_SPEED_X
@@ -68,8 +83,14 @@ def _handle_ball_vs_paddle(ball: Ball, paddle: Paddle) -> None:
 
 def main():
     pygame.init()
+    pygame.mixer.init()
     screen = pygame.display.set_mode((cfg.WIDTH, cfg.HEIGHT))
     pygame.display.set_caption("Arkanoid")
+    pygame.mixer.music.load("assets/music.mp3")
+    pygame.mixer.music.set_volume(0.5)
+    pygame.mixer.music.play(-1)  # Loop forever
+    hit_sound = pygame.mixer.Sound("assets/hit.mp3")
+    bonus_sound = pygame.mixer.Sound("assets/bonus.mp3")
     clock = pygame.time.Clock()
 
     running = True
@@ -77,6 +98,13 @@ def main():
 
     bricks, rows, cols = load_level(1)
     ball = Ball(cfg.WIDTH // 2, cfg.HEIGHT)
+
+    powerups = []
+
+    muted = False
+
+    mute_button = pygame.Rect(cfg.WIDTH - 110, 10, 90, 35)
+    font = pygame.font.SysFont(None, 28)
 
     while running:
         # Main Loop
@@ -87,23 +115,91 @@ def main():
 
         paddle.move(keys)
 
-        _handle_ball_vs_bricks(ball, bricks)
+        _handle_ball_vs_bricks(ball, bricks, powerups, hit_sound)
 
         if ball.rect.colliderect(paddle.rect) and ball.vy > 0:
-            _handle_ball_vs_paddle(ball, paddle)
+            _handle_ball_vs_paddle(ball, paddle, hit_sound)
 
         for brick in bricks:
             brick.draw(screen)
 
         ball.update()
 
+        # Update powerups
+        for powerup in powerups[:]:
+            powerup.update()
+
+            if powerup.rect.colliderect(paddle.rect):
+
+                if powerup.type == "shrink":
+                    center = paddle.rect.centerx
+                    paddle.rect.width = 60
+                    paddle.rect.centerx = center
+
+                elif powerup.type == "speed_up":
+                    ball.vx *= 1.3
+                    ball.vy *= 1.3
+
+                    if abs(ball.vx) > 10:
+                        ball.vx = 10 if ball.vx > 0 else -10
+
+                    if abs(ball.vy) > 10:
+                        ball.vy = 10 if ball.vy > 0 else -10
+
+                elif powerup.type == "speed_down":
+                    ball.vx *= 0.7
+                    ball.vy *= 0.7
+
+                    if abs(ball.vx) < 2:
+                        ball.vx = 2 if ball.vx > 0 else -2
+
+                    if abs(ball.vy) < 2:
+                        ball.vy = 2 if ball.vy > 0 else -2
+                bonus_sound.play()
+                powerups.remove(powerup)
+
+            elif powerup.rect.top > cfg.HEIGHT:
+                powerups.remove(powerup)
+        pygame.draw.rect(screen, (70, 70, 70), mute_button, border_radius=8)
+
+        text = "Mute" if not muted else "Unmute"
+        label = font.render(text, True, (255, 255, 255))
+
+        screen.blit(
+            label,
+            (
+                mute_button.centerx - label.get_width() // 2,
+                mute_button.centery - label.get_height() // 2,
+            ),
+        )
+
         # Draw Section
         paddle.draw(screen)
         ball.draw(screen)
 
+        # Draw all powerups
+        for powerup in powerups:
+            powerup.draw(screen)
+
         for event in pygame.event.get():
-            if event.type == pygame.QUIT:   # Press "close" button
+
+            if event.type == pygame.QUIT:
                 running = False
+
+            elif event.type == pygame.MOUSEBUTTONDOWN:
+
+                if mute_button.collidepoint(event.pos):
+
+                    muted = not muted
+
+                    if muted:
+                        pygame.mixer.music.set_volume(0)
+                        hit_sound.set_volume(0)
+                        bonus_sound.set_volume(0)
+                    else:
+                        pygame.mixer.music.set_volume(0.5)
+                        hit_sound.set_volume(1)
+                        bonus_sound.set_volume(1)
 
         pygame.display.flip()   # Screen Update
         clock.tick(cfg.FPS)         # FPS (Frames Per Second)
