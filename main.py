@@ -55,7 +55,7 @@ def _handle_ball_vs_bricks(
         _bounce_off_rect(ball, brick.rect)
         if brick.hp == -1: 
             continue
-        bonus_type = brick.hit()
+        brick.hit()
 
         if brick.hp <= 0:
             hit_sound.play()
@@ -104,7 +104,8 @@ def main():
     muted = False
 
     mute_button = pygame.Rect(cfg.WIDTH - 110, 10, 90, 35)
-    font = pygame.font.SysFont(None, 28)
+    button_font = pygame.font.SysFont(None, 28)
+    title_font = pygame.font.SysFont(None, 72)
 
     while running:
         # Main Loop
@@ -117,6 +118,24 @@ def main():
 
         _handle_ball_vs_bricks(ball, bricks, powerups, hit_sound)
 
+        # Win condition
+        remaining = [brick for brick in bricks if brick.hp > 0]
+
+        if len(remaining) == 0:
+            text = title_font.render("YOU WIN!", True, (0, 255, 0))
+
+            screen.blit(
+                text,
+                (
+                    cfg.WIDTH // 2 - text.get_width() // 2,
+                    cfg.HEIGHT // 2 - text.get_height() // 2,
+                ),
+            )
+
+            pygame.display.flip()
+            pygame.time.wait(3000)
+            running = False
+
         if ball.rect.colliderect(paddle.rect) and ball.vy > 0:
             _handle_ball_vs_paddle(ball, paddle, hit_sound)
 
@@ -124,6 +143,21 @@ def main():
             brick.draw(screen)
 
         ball.update()
+        # Lose condition
+        if ball.rect.bottom >= cfg.HEIGHT:
+            text = title_font.render("GAME OVER", True, (255, 0, 0))
+
+            screen.blit(
+                text,
+                (
+                    cfg.WIDTH // 2 - text.get_width() // 2,
+                    cfg.HEIGHT // 2 - text.get_height() // 2,
+                ),
+            )
+
+            pygame.display.flip()
+            pygame.time.wait(3000)
+            running = False
 
         # Update powerups
         for powerup in powerups[:]:
@@ -160,10 +194,20 @@ def main():
 
             elif powerup.rect.top > cfg.HEIGHT:
                 powerups.remove(powerup)
+
+
+        # Draw Section
+        paddle.draw(screen)
+        ball.draw(screen)
+
+        for powerup in powerups:
+            powerup.draw(screen)
+
+        # Draw mute button last
         pygame.draw.rect(screen, (70, 70, 70), mute_button, border_radius=8)
 
         text = "Mute" if not muted else "Unmute"
-        label = font.render(text, True, (255, 255, 255))
+        label = button_font.render(text, True, (255, 255, 255))
 
         screen.blit(
             label,
@@ -172,14 +216,6 @@ def main():
                 mute_button.centery - label.get_height() // 2,
             ),
         )
-
-        # Draw Section
-        paddle.draw(screen)
-        ball.draw(screen)
-
-        # Draw all powerups
-        for powerup in powerups:
-            powerup.draw(screen)
 
         for event in pygame.event.get():
 
