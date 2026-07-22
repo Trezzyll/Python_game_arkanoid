@@ -97,9 +97,13 @@ def main():
     paddle = Paddle()
 
     bricks, rows, cols = load_level(1)
-    ball = Ball(cfg.WIDTH // 2, cfg.HEIGHT)
+    ball = Ball(cfg.WIDTH // 2, cfg.HEIGHT - 80)
 
     powerups = []
+
+    shrink_end_time = 0
+    NORMAL_PADDLE_WIDTH = cfg.PADDLE_WIDTH
+    SHRUNK_PADDLE_WIDTH = 60
 
     muted = False
 
@@ -115,6 +119,15 @@ def main():
         keys = pygame.key.get_pressed()
 
         paddle.move(keys)
+        if (
+                shrink_end_time > 0
+                and pygame.time.get_ticks() >= shrink_end_time
+                and paddle.rect.width != NORMAL_PADDLE_WIDTH
+        ):
+            center = paddle.rect.centerx
+            paddle.rect.width = NORMAL_PADDLE_WIDTH
+            paddle.rect.centerx = center
+            shrink_end_time = 0
 
         _handle_ball_vs_bricks(ball, bricks, powerups, hit_sound)
 
@@ -167,8 +180,10 @@ def main():
 
                 if powerup.type == "shrink":
                     center = paddle.rect.centerx
-                    paddle.rect.width = 60
+                    paddle.rect.width = SHRUNK_PADDLE_WIDTH
                     paddle.rect.centerx = center
+
+                    shrink_end_time = pygame.time.get_ticks() + 10000
 
                 elif powerup.type == "speed_up":
                     ball.vx *= 1.3
