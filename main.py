@@ -1,7 +1,6 @@
 import pygame
 import random
 import settings as cfg
-from screens.game_screen import run as game_screen
 from game.entities import Paddle, Brick, Ball, PowerUp
 from game.level import load_level
 
